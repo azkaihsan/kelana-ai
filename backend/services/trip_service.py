@@ -9,9 +9,9 @@ def get_trip_category(budget):
     """Categorize trip based on budget amount."""
     if budget < 1000:
         return "Backpacker"
-    elif budget < 3000:
+    elif budget >= 1000 and budget <= 3000:
         return "Standard"
-    else:
+    elif budget > 3000:
         return "Luxury"
 
 
@@ -42,3 +42,13 @@ def get_recommended_transportation(category):
         "Luxury": "Flight"
     }
     return mapping.get(category, "Unknown")
+
+    
+def get_travel_season(month):
+    """Determine travel season based on month."""
+    if month == 12:
+        return "Peak Season"
+    elif month == 6:
+        return "Holiday Season"
+    else:
+        return "Regular Season"
