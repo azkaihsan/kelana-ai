@@ -29,10 +29,25 @@ def get_recommended_places():
     """Return a list of recommended places."""
     return [
         "Tokyo Tower",
-        "Shibuya", 
-        "Mount Fuji"
+        "Mount Fuji",
+        "Shibuya"
     ]
 
+def get_valid_trip_categories():
+    """Return a list of trip categories."""
+    return [
+        "Backpacker", 
+        "Standard", 
+        "Luxury"
+    ]
+
+def get_transportations():
+    """Return a list of transportations."""
+    return [
+        "Bus", 
+        "Train", 
+        "Flight"
+    ]
 
 def get_recommended_transportation(category):
     """Map trip category to recommended transportation."""
