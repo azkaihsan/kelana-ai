@@ -9,19 +9,18 @@ from services.trip_service import (
     get_valid_trip_categories,
     get_recommended_transportation,
     get_recommended_places,
-    get_transportations,
-    build_trip_prompt
+    get_transportations
 )
-from services.bedrock_service import generate_ai_recommendation
+from services.bedrock_service import generate_ai_recommendation, build_trip_prompt
 
 app = FastAPI()
 
 init_db()
 
 class TripRequest(BaseModel):
-	destination: 	str
-	days: 		    int
-	budget:		    float
+    destination: str
+    days: int
+    budget: float
 
 class TripUpdateRequest(BaseModel):
     destination: Optional[str] = None
