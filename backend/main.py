@@ -9,8 +9,10 @@ from services.trip_service import (
     get_valid_trip_categories,
     get_recommended_transportation,
     get_recommended_places,
-    get_transportations
+    get_transportations,
+    build_trip_prompt
 )
+from services.bedrock_service import generate_ai_recommendation
 
 app = FastAPI()
 
@@ -25,6 +27,11 @@ class TripUpdateRequest(BaseModel):
     destination: Optional[str] = None
     days: Optional[int] = None
     budget: Optional[float] = None
+
+class TripRecommendationResponse(BaseModel):
+    trip_id: int
+    destination: str
+    recommendation: str
 
 # GET endpoint at the root path
 @app.get("/")
@@ -146,3 +153,48 @@ def delete_trip(trip_id: int):
     db.close()
     
     return {"message": f"Trip with id {trip_id} deleted successfully"}
+
+
+# POST endpoint — generate AI recommendation for an existing trip
+@app.post("/api/v1/trips/{trip_id}/generate", response_model=TripRecommendationResponse)
+def generate_trip_recommendation(trip_id: int):
+    """
+    Generate AI recommendation for an existing trip.
+    
+    Flow:
+    1. Retrieve trip based on ID
+    2. Build prompt for AI recommendation
+    3. Call Bedrock AI service
+    4. Receive AI response
+    5. Save response to ai_recommendation column
+    6. Return formatted response
+    """
+    # Step 1: Retrieve trip based on ID
+    db = SessionLocal()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        db.close()
+        raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} not found")
+    
+    # Step 2: Build prompt for AI recommendation
+    prompt = build_trip_prompt(trip)
+    
+    # Step 3: Call Bedrock AI service
+    try:
+        ai_response = generate_ai_recommendation(prompt)
+    except Exception as e:
+        db.close()
+        raise HTTPException(status_code=500, detail=f"Failed to generate AI recommendation: {str(e)}")
+    
+    # Step 4 & 5: Receive AI response & Save the response into ai_recommendation column
+    trip.ai_recommendation = ai_response
+    db.commit()
+    db.refresh(trip)
+    db.close()
+    
+    # Step 6: Return the response body as formatted
+    return {
+        "trip_id": trip.id,
+        "destination": trip.destination,
+        "recommendation": ai_response
+    }

@@ -67,3 +67,37 @@ def get_travel_season(month):
         return "Holiday Season"
     else:
         return "Regular Season"
+
+
+def build_trip_prompt(trip):
+    """
+    Build a prompt for AI trip recommendations based on trip details.
+    
+    Args:
+        trip: Trip object containing destination, days, budget, category, etc.
+        
+    Returns:
+        str: Formatted prompt for AI recommendation
+    """
+    prompt = f"""Create a detailed trip itinerary for a {trip.days}-day trip to {trip.destination}.
+    
+Trip Details:
+- Destination: {trip.destination}
+- Duration: {trip.days} days
+- Total Budget: ${trip.budget:.2f}
+- Daily Budget: ${trip.daily_budget:.2f}
+- Trip Category: {trip.category}
+    
+Please provide a detailed day-by-day itinerary including:
+1. Activities and attractions for each day
+2. Recommended accommodations suitable for the budget
+3. Transportation suggestions within the destination
+4. Dining and local food recommendations
+5. Estimated costs breakdown for each day
+6. Tips for making the most of the trip within the given budget
+    
+Make the itinerary practical, enjoyable, and suitable for the {trip.category} travel style.
+
+Format your response as Markdown with headers (##) and bullet lists (-)."""
+    
+    return prompt
