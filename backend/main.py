@@ -1,19 +1,28 @@
+import json
 from database import SessionLocal, init_db
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from models.trip import Trip
 from pydantic import BaseModel
-from typing import Optional
+from typing import Any, List, Optional
 from services.trip_service import (
     calculate_daily_budget,
     get_trip_category,
     get_valid_trip_categories,
-    get_recommended_transportation,
     get_recommended_places,
     get_transportations
 )
 from services.bedrock_service import generate_ai_recommendation, build_trip_prompt
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 init_db()
 
@@ -30,7 +39,7 @@ class TripUpdateRequest(BaseModel):
 class TripRecommendationResponse(BaseModel):
     trip_id: int
     destination: str
-    recommendation: str
+    recommendation: List[Any]  # structured JSON: list of day objects
 
 # GET endpoint at the root path
 @app.get("/")
@@ -186,7 +195,8 @@ def generate_trip_recommendation(trip_id: int):
         raise HTTPException(status_code=500, detail=f"Failed to generate AI recommendation: {str(e)}")
     
     # Step 4 & 5: Receive AI response & Save the response into ai_recommendation column
-    trip.ai_recommendation = ai_response
+    # ai_response is a list; serialize to JSON string for DB storage
+    trip.ai_recommendation = json.dumps(ai_response)
     db.commit()
     db.refresh(trip)
     db.close()
