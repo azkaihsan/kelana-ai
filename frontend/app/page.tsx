@@ -2,40 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-type BudgetBreakdown = {
-  accommodation: string;
-  food: string;
-  transport: string;
-  activities: string;
-  total: string;
-};
-
-type ItineraryDay = {
-  day: number;
-  title: string;
-  travel_tips: string[];
-  local_food: string[];
-  budget_breakdown: BudgetBreakdown;
-};
-
-type TripResponse = {
-  id: number;
-  destination: string;
-  days: number;
-  budget: number;
-  category: string;
-  daily_budget: number;
-  ai_recommendation: string | null;
-};
-
-type AIRecommendationResponse = {
-  trip_id: number;
-  destination: string;
-  recommendation: ItineraryDay[];
-};
+import { useRouter } from "next/navigation";
+import { createTrip, generateTrip } from "@/services/tripService";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -53,92 +21,41 @@ const FOOTER_NAV_LINKS: { label: string; href: string }[] = [
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const router = useRouter();
+
   const [destination, setDestination] = useState("Japan");
   const [budget, setBudget] = useState("2000");
   const [days, setDays] = useState("5");
   const [loading, setLoading] = useState(false);
-  const [itinerary, setItinerary] = useState<ItineraryDay[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
+    if (!destination.trim()) {
+      setError("Please enter a destination.");
+      return;
+    }
+
     setLoading(true);
-    setItinerary(null);
     setError(null);
 
     try {
-      // Step 1: Create a new trip
-      const tripResponse = await fetch("http://localhost:8000/api/v1/trips", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destination,
-          days: parseInt(days),
-          budget: parseFloat(budget),
-        }),
+      // Step 1: Create a new trip record
+      const trip = await createTrip({
+        destination: destination.trim(),
+        days: parseInt(days, 10),
+        budget: parseFloat(budget),
       });
 
-      if (!tripResponse.ok) {
-        const errorData = await tripResponse.json();
-        throw new Error(
-          `Failed to create trip: ${errorData.detail || tripResponse.statusText}`
-        );
-      }
+      // Step 2: Generate AI itinerary for the created trip
+      await generateTrip(trip.id);
 
-      const trip: TripResponse = await tripResponse.json();
-
-      // Step 2: Generate AI recommendations for the created trip
-      const aiResponse = await fetch(
-        `http://localhost:8000/api/v1/trips/${trip.id}/generate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (!aiResponse.ok) {
-        const errorData = await aiResponse.json();
-        throw new Error(
-          `Failed to generate AI recommendations: ${errorData.detail || aiResponse.statusText}`
-        );
-      }
-
-      const aiRecommendation: AIRecommendationResponse = await aiResponse.json();
-
-      // Step 3: The recommendation is already a structured list
-      setItinerary(aiRecommendation.recommendation);
+      // Step 3: Redirect to trip history on success
+      router.push("/trips");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unexpected error occurred."
       );
       console.error("Error generating trip:", err);
-
-      // Fallback mock data with proper structure
-      const numDays = Math.max(1, parseInt(days || "1", 10));
-      const generated: ItineraryDay[] = Array.from(
-        { length: numDays },
-        (_, i) => ({
-          day: i + 1,
-          title: `Day ${i + 1}: Exploring ${destination}`,
-          travel_tips: [
-            "Start early to beat the crowds at popular sites",
-            "Use local public transport to save on commute costs",
-            "Download offline maps before heading out",
-          ],
-          local_food: [
-            "Try the local street food at the main market",
-            "Visit a highly-rated neighborhood restaurant for dinner",
-            "Sample traditional breakfast at a local café",
-          ],
-          budget_breakdown: {
-            accommodation: "~$50/night — mid-range guesthouse",
-            food: "~$30 — street food + one sit-down meal",
-            transport: "~$10 — subway / bus day pass",
-            activities: "~$20 — entrance fees & tours",
-            total: "~$110 total",
-          },
-        })
-      );
-      setItinerary(generated);
     } finally {
       setLoading(false);
     }
@@ -164,6 +81,12 @@ export default function Home() {
               {item}
             </a>
           ))}
+          <a
+            href="/trips"
+            className="text-sm font-medium text-white/80 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          >
+            My Trips
+          </a>
         </nav>
       </header>
 
@@ -239,6 +162,7 @@ export default function Home() {
                     className="w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
                     placeholder="e.g. Japan, Bali, Paris…"
                     aria-label="Travel destination"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -262,6 +186,7 @@ export default function Home() {
                     className="w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
                     placeholder="2000"
                     aria-label="Trip budget in USD"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -285,6 +210,7 @@ export default function Home() {
                     className="w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
                     placeholder="5"
                     aria-label="Number of travel days"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -323,21 +249,19 @@ export default function Home() {
                     Something went wrong
                   </p>
                   <p className="mt-0.5 text-xs text-red-500">{error}</p>
-                  <p className="mt-0.5 text-xs text-red-400">
-                    Showing fallback itinerary data instead.
-                  </p>
                 </div>
               </div>
             )}
           </div>
         </section>
 
-        {/* ── Results / Loading ────────────────────────────────────────────── */}
-        <section
-          aria-label="AI-generated itinerary"
-          className="mx-auto w-full max-w-4xl px-4 pb-16 pt-10 md:px-8"
-        >
-          {loading && !itinerary && (
+        {/* ── Loading overlay while generating ────────────────────────────── */}
+        {loading && (
+          <section
+            aria-live="polite"
+            aria-label="Generation status"
+            className="mx-auto w-full max-w-4xl px-4 pb-8 pt-10 md:px-8"
+          >
             <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-16 shadow-sm">
               <Spinner color="blue" size={8} />
               <p className="mt-4 text-sm font-semibold text-gray-700">
@@ -347,26 +271,11 @@ export default function Home() {
                 Hang tight, this usually takes 10–20 seconds.
               </p>
             </div>
-          )}
+          </section>
+        )}
 
-          {itinerary && (
-            <>
-              <div className="mb-6 flex items-center gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100">
-                  <CheckIcon />
-                </span>
-                <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-700">
-                  AI Recommendation — {itinerary.length}-Day Itinerary
-                </h2>
-              </div>
-              <div className="space-y-5">
-                {itinerary.map((item) => (
-                  <DayCard key={item.day} item={item} />
-                ))}
-              </div>
-            </>
-          )}
-        </section>
+        {/* Spacer so footer sits at bottom when form is the only content */}
+        {!loading && <div className="flex-1" />}
       </main>
 
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
@@ -401,94 +310,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  );
-}
-
-// ── Day Card ─────────────────────────────────────────────────────────────────
-
-function DayCard({ item }: { item: ItineraryDay }) {
-  return (
-    <article
-      aria-label={`Itinerary for ${item.title}`}
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
-    >
-      {/* Day header */}
-      <div className="flex items-center gap-3 bg-gradient-to-r from-sky-500 to-emerald-500 px-5 py-4">
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
-          {item.day}
-        </span>
-        <p className="font-semibold text-white">{item.title}</p>
-      </div>
-
-      <div className="divide-y divide-slate-100">
-        {/* Travel Tips */}
-        <section className="px-5 py-4" aria-label="Travel tips">
-          <div className="mb-3 flex items-center gap-2">
-            <MapIcon />
-            <span className="text-xs font-bold uppercase tracking-wide text-sky-700">
-              Travel Tips
-            </span>
-          </div>
-          <ul className="space-y-1.5">
-            {item.travel_tips.map((tip, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
-                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sky-400" />
-                {tip}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Local Food */}
-        <section className="px-5 py-4" aria-label="Local food recommendations">
-          <div className="mb-3 flex items-center gap-2">
-            <ForkIcon />
-            <span className="text-xs font-bold uppercase tracking-wide text-orange-600">
-              Local Food
-            </span>
-          </div>
-          <ul className="space-y-1.5">
-            {item.local_food.map((food, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
-                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-orange-400" />
-                {food}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Budget Breakdown */}
-        <section className="px-5 py-4" aria-label="Budget breakdown">
-          <div className="mb-3 flex items-center gap-2">
-            <WalletIcon />
-            <span className="text-xs font-bold uppercase tracking-wide text-emerald-700">
-              Budget Breakdown
-            </span>
-          </div>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-            <BudgetRow label="Accommodation" value={item.budget_breakdown.accommodation} />
-            <BudgetRow label="Food" value={item.budget_breakdown.food} />
-            <BudgetRow label="Transport" value={item.budget_breakdown.transport} />
-            <BudgetRow label="Activities" value={item.budget_breakdown.activities} />
-          </dl>
-          <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-2.5">
-            <span className="text-xs font-bold text-gray-700">Daily Total</span>
-            <span className="text-sm font-bold text-emerald-700">
-              {item.budget_breakdown.total}
-            </span>
-          </div>
-        </section>
-      </div>
-    </article>
-  );
-}
-
-function BudgetRow({ label, value }: { label: string; value: string }) {
-  return (
-    <>
-      <dt className="text-xs text-gray-500">{label}</dt>
-      <dd className="text-right text-xs text-gray-700">{value}</dd>
-    </>
   );
 }
 
@@ -592,52 +413,6 @@ function CalendarIcon() {
       <path
         fillRule="evenodd"
         d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-
-function ForkIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4 flex-shrink-0 text-orange-500"
-      aria-hidden="true"
-    >
-      <path d="M9.25 2a.75.75 0 01.75.75v.56a2.25 2.25 0 011.5 2.19v.5h.25a.75.75 0 010 1.5h-.25v7a.75.75 0 01-1.5 0v-7H9.5v7a.75.75 0 01-1.5 0v-7H7.75a.75.75 0 010-1.5H8v-.5a2.25 2.25 0 011.5-2.19V2.75A.75.75 0 019.25 2zM13 2.75a.75.75 0 011.5 0v4.971a2.25 2.25 0 01-1.5 2.12V14.5a.75.75 0 01-1.5 0V9.84a2.25 2.25 0 01-1.5-2.12V2.75a.75.75 0 011.5 0v4.5h1.5v-4.5z" />
-    </svg>
-  );
-}
-
-function WalletIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4 flex-shrink-0 text-emerald-600"
-      aria-hidden="true"
-    >
-      <path d="M1 4.25a3.733 3.733 0 012.25-.75h13.5c.844 0 1.623.279 2.25.75A2.25 2.25 0 0016.75 2H3.25A2.25 2.25 0 001 4.25zM1 7.25a3.733 3.733 0 012.25-.75h13.5c.844 0 1.623.279 2.25.75A2.25 2.25 0 0016.75 5H3.25A2.25 2.25 0 001 7.25zM7 8a1 1 0 000 2 2 2 0 012 2 1 1 0 102 0 2 2 0 012-2 1 1 0 100-2 2 2 0 01-2-2 1 1 0 10-2 0 2 2 0 01-2 2zM3.25 8H1v8.75C1 18.216 2.343 19.5 4 19.5h12c1.657 0 3-1.284 3-2.75V8H3.25z" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4 text-emerald-600"
-      aria-hidden="true"
-    >
-      <path
-        fillRule="evenodd"
-        d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
         clipRule="evenodd"
       />
     </svg>
