@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getTrips } from "@/services/tripService";
 import { TripCard } from "@/components/TripCard";
+import { Pagination } from "@/components/Pagination";
 import type { Trip } from "@/types/trip";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const ITEMS_PER_PAGE = 10;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,9 +22,10 @@ export default function TripsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Search & sort state
+  // Search, sort & pagination state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortMode>("latest");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     getTrips()
@@ -65,6 +71,19 @@ export default function TripsPage() {
         }
       });
   }, [trips, searchQuery, sortBy]);
+
+  // ── Pagination derived state ──────────────────────────────────────────────
+  const totalPages = Math.ceil(filteredAndSortedTrips.length / ITEMS_PER_PAGE);
+
+  const paginatedTrips = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedTrips.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAndSortedTrips, currentPage]);
+
+  // Reset to page 1 whenever filters or sort order change.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy]);
 
   const hasActiveFilters = searchQuery.trim() !== "" || sortBy !== "latest";
 
@@ -247,7 +266,7 @@ export default function TripsPage() {
         {/* ── Trip List ────────────────────────────────────────────────── */}
         {!loading && !error && filteredAndSortedTrips.length > 0 && (
           <>
-            {/* Result count badge shown when a filter is active */}
+            {/* Result count badge — shows filter match count when a filter is active */}
             {hasActiveFilters && (
               <p className="mb-3 text-xs text-gray-500">
                 Showing{" "}
@@ -261,8 +280,9 @@ export default function TripsPage() {
                 {trips.length === 1 ? "trip" : "trips"}
               </p>
             )}
+
             <ul className="space-y-3" aria-label="Saved trips">
-              {filteredAndSortedTrips.map((trip) => (
+              {paginatedTrips.map((trip) => (
                 <li key={trip.id}>
                   <TripCard
                     id={trip.id}
@@ -274,6 +294,16 @@ export default function TripsPage() {
                 </li>
               ))}
             </ul>
+
+            {/* ── Pagination controls ──────────────────────────────── */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredAndSortedTrips.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+              itemLabel="trip"
+            />
           </>
         )}
       </main>
