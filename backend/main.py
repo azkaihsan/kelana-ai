@@ -1,9 +1,10 @@
 import json
 import os
 from database import SessionLocal, init_db
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from models.trip import Trip
+from models.user import User
 from pydantic import BaseModel
 from typing import Any, List, Optional
 from services.trip_service import (
@@ -14,6 +15,14 @@ from services.trip_service import (
     get_transportations
 )
 from services.bedrock_service import generate_ai_recommendation, build_trip_prompt
+from services.auth_service import verify_token
+
+# Try to import auth router - it may not exist yet
+try:
+    from routers.auth import router as auth_router
+    _auth_router_available = True
+except ImportError:
+    _auth_router_available = False
 
 app = FastAPI()
 
@@ -26,6 +35,60 @@ app.add_middleware(
 )
 
 init_db()
+
+# Auth routes
+if _auth_router_available:
+    app.include_router(auth_router)
+
+# FastAPI dependency to get current authenticated user
+def get_current_user(authorization: Optional[str] = Header(None)) -> User:
+    """
+    FastAPI dependency that extracts and validates JWT token from Authorization header.
+    
+    Args:
+        authorization: Authorization header value (format: "Bearer <token>")
+        
+    Returns:
+        User: The authenticated user object
+        
+    Raises:
+        HTTPException: 401 if token is missing, malformed, or invalid
+    """
+    # Check if Authorization header is present
+    if authorization is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header missing"
+        )
+    
+    # Validate header format: "Bearer <token>"
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format. Expected: Bearer <token>"
+        )
+    
+    token = parts[1]
+    
+    # Verify token and extract user_id
+    # verify_token raises HTTPException(401) if token is invalid/expired
+    user_id = verify_token(token)
+    
+    # Query database to fetch User object
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        
+        if user is None:
+            raise HTTPException(
+                status_code=401,
+                detail="User not found"
+            )
+        
+        return user
+    finally:
+        db.close()
 
 class TripRequest(BaseModel):
     destination: str
@@ -73,25 +136,29 @@ def get_all_transportations():
     return get_transportations()
 
 @app.get("/api/v1/trips")
-def list_trips():
+def list_trips(current_user: User = Depends(get_current_user)):
     db = SessionLocal()
-    trips = db.query(Trip).all()
+    # Filter trips to only return those belonging to the authenticated user
+    trips = db.query(Trip).filter(Trip.user_id == current_user.id).all()
     db.close()
     return trips
 
 @app.get("/api/v1/trips/{trip_id}")
-def get_trip(trip_id: int):
+def get_trip(trip_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     db.close()
     # handling not found
     if trip is None:
         raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} not found")
+    # Verify ownership - user can only access their own trips
+    if trip.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied: You can only access your own trips")
     return trip
 
 # POST endpoint — receives JSON, returns JSON
 @app.post("/api/v1/trips")
-def create_trip(request: TripRequest):
+def create_trip(request: TripRequest, current_user: User = Depends(get_current_user)):
     # reuse Session 2 business logic
     daily_budget = calculate_daily_budget(request.budget, request.days)
     category     = get_trip_category(request.budget)
@@ -103,6 +170,7 @@ def create_trip(request: TripRequest):
         budget       = request.budget,
         category     = category,
         daily_budget = daily_budget,
+        user_id      = current_user.id,  # Associate trip with authenticated user
     )
 
     # save to PostgreSQL
@@ -115,13 +183,18 @@ def create_trip(request: TripRequest):
 
 # PUT endpoint — update trip by ID
 @app.put("/api/v1/trips/{trip_id}")
-def update_trip(trip_id: int, request: TripUpdateRequest):
+def update_trip(trip_id: int, request: TripUpdateRequest, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     # Check if trip exists
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if trip is None:
         db.close()
         raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} not found")
+    
+    # Verify ownership before updating
+    if trip.user_id != current_user.id:
+        db.close()
+        raise HTTPException(status_code=403, detail="Access denied: You can only update your own trips")
     
     # Update fields if provided
     if request.destination is not None:
@@ -148,13 +221,18 @@ def update_trip(trip_id: int, request: TripUpdateRequest):
 
 # DELETE endpoint — remove trip by ID
 @app.delete("/api/v1/trips/{trip_id}")
-def delete_trip(trip_id: int):
+def delete_trip(trip_id: int, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     # Check if trip exists
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if trip is None:
         db.close()
         raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} not found")
+    
+    # Verify ownership before deleting
+    if trip.user_id != current_user.id:
+        db.close()
+        raise HTTPException(status_code=403, detail="Access denied: You can only delete your own trips")
     
     # Delete the trip
     result = db.query(Trip).filter(Trip.id == trip_id).delete()
@@ -166,7 +244,7 @@ def delete_trip(trip_id: int):
 
 # POST endpoint — generate AI recommendation for an existing trip
 @app.post("/api/v1/trips/{trip_id}/generate", response_model=TripRecommendationResponse)
-def generate_trip_recommendation(trip_id: int):
+def generate_trip_recommendation(trip_id: int, current_user: User = Depends(get_current_user)):
     """
     Generate AI recommendation for an existing trip.
     
@@ -184,6 +262,11 @@ def generate_trip_recommendation(trip_id: int):
     if trip is None:
         db.close()
         raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} not found")
+    
+    # Verify ownership before generating recommendation
+    if trip.user_id != current_user.id:
+        db.close()
+        raise HTTPException(status_code=403, detail="Access denied: You can only generate recommendations for your own trips")
     
     # Step 2: Build prompt for AI recommendation
     prompt = build_trip_prompt(trip)

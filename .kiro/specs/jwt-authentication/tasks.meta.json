@@ -1,0 +1,253 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add `verify_token` function to `backend/services/auth_service.py`": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608123099
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608135181
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608571322
+      }
+    ],
+    "1.2 Add `get_current_user` dependency in `backend/main.py`": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608123459
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608577079
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609117922
+      }
+    ],
+    "2.1 Verify auth router exists and is properly mounted": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608123822
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608577977
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609118672
+      }
+    ],
+    "3.1 Add authentication to all trip endpoints in `backend/main.py`": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124004
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609124266
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609398760
+      }
+    ],
+    "3.2 Filter trips by authenticated user": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124123
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609404121
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788610313173
+      }
+    ],
+    "3.3 Populate user_id on trip creation": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124268
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609404972
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788610313881
+      }
+    ],
+    "4. Checkpoint - Test backend authentication": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124437
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788610319935
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611095826
+      }
+    ],
+    "5.1 Create login page component at `frontend/app/login/page.tsx`": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124552
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611100954
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611304566
+      }
+    ],
+    "6.1 Create `frontend/services/authService.ts`": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124680
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611101806
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611305401
+      }
+    ],
+    "6.2 Create HTTP interceptor utility in `frontend/lib/apiClient.ts`": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124787
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611311069
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788612723699
+      }
+    ],
+    "7.1 Refactor `frontend/services/tripService.ts` to use apiClient": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608124915
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788612748951
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788612920814
+      }
+    ],
+    "8.1 Implement logout button in navigation": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608125076
+      },
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788612926733
+      }
+    ],
+    "9. Final checkpoint - End-to-end authentication flow": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788608125280
+      }
+    ],
+    "1. Implement backend JWT token verification": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609118019
+      }
+    ],
+    "2. Add authentication endpoints": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788609118837
+      }
+    ],
+    "3. Protect trip endpoints with authentication": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788610314047
+      }
+    ],
+    "5. Create frontend login page": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788611304737
+      }
+    ],
+    "6. Create authenticated API client": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788612723852
+      }
+    ],
+    "7. Update trip service to use authenticated client": [
+      {
+        "executionId": "08bb14f1-a1ac-4f14-b043-dbcb6debd03b",
+        "chatSessionId": "sess_c226d9c4-697e-485a-8c9e-a587bca4412c",
+        "timestamp": 1788612921140
+      }
+    ]
+  }
+}

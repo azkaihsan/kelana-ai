@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, ForeignKey
 from sqlalchemy.sql import func
 from database import Base
 
@@ -12,3 +12,4 @@ class Trip(Base):
     daily_budget        = Column(Float,    nullable=False)
     created_at          = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     ai_recommendation   = Column(Text, nullable=True)
+    user_id             = Column(Integer, ForeignKey("users.id"), nullable=True)

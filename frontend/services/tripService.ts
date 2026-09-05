@@ -3,6 +3,7 @@ import type {
   CreateTripPayload,
   AIRecommendationResponse,
 } from "@/types/trip";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
@@ -27,20 +28,20 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 /** Fetch the full list of saved trips. */
 export async function getTrips(): Promise<Trip[]> {
-  const res = await fetch(`${API_BASE}/trips`, { cache: "no-store" });
+  const res = await authenticatedFetch(`${API_BASE}/trips`, { cache: "no-store" });
   return handleResponse<Trip[]>(res);
 }
 
 /** Fetch a single trip by ID. Returns null on 404. */
 export async function getTripById(id: string | number): Promise<Trip | null> {
-  const res = await fetch(`${API_BASE}/trips/${id}`, { cache: "no-store" });
+  const res = await authenticatedFetch(`${API_BASE}/trips/${id}`, { cache: "no-store" });
   if (res.status === 404) return null;
   return handleResponse<Trip>(res);
 }
 
 /** Create a new trip and return the saved record. */
 export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
-  const res = await fetch(`${API_BASE}/trips`, {
+  const res = await authenticatedFetch(`${API_BASE}/trips`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -55,7 +56,7 @@ export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
 export async function generateTrip(
   tripId: string | number
 ): Promise<AIRecommendationResponse> {
-  const res = await fetch(`${API_BASE}/trips/${tripId}/generate`, {
+  const res = await authenticatedFetch(`${API_BASE}/trips/${tripId}/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });

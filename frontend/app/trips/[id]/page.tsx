@@ -1,34 +1,77 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getTripById } from "@/services/tripService";
-import type { ItineraryDay } from "@/types/trip";
+import Navbar from "@/components/Navbar";
+import type { Trip, ItineraryDay } from "@/types/trip";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function TripDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const trip = await getTripById(id);
+export default function TripDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
-  if (!trip) {
-    notFound();
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [itinerary, setItinerary] = useState<ItineraryDay[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTrip() {
+      try {
+        const data = await getTripById(id);
+        if (!data) {
+          router.replace("/not-found");
+          return;
+        }
+        setTrip(data);
+
+        // Parse ai_recommendation JSON string → ItineraryDay[] | null
+        if (data.ai_recommendation) {
+          try {
+            setItinerary(JSON.parse(data.ai_recommendation) as ItineraryDay[]);
+          } catch {
+            setItinerary(null);
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load trip.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTrip();
+  }, [id, router]);
+
+  // ── Loading state ────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-sm text-gray-400 animate-pulse">Loading trip…</p>
+      </div>
+    );
   }
 
-  // Parse ai_recommendation JSON string → ItineraryDay[] | null
-  let itinerary: ItineraryDay[] | null = null;
-  if (trip.ai_recommendation) {
-    try {
-      itinerary = JSON.parse(trip.ai_recommendation) as ItineraryDay[];
-    } catch {
-      itinerary = null;
-    }
+  // ── Error state ──────────────────────────────────────────────────────────────
+  if (error || !trip) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
+        <p className="text-sm font-semibold text-red-500">{error ?? "Trip not found."}</p>
+        <Link href="/trips" className="text-sm text-sky-600 hover:underline">
+          ← Back to Trips
+        </Link>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* ── Navbar ──────────────────────────────────────────────────────── */}
+      <Navbar variant="solid" />
+
       <main className="mx-auto max-w-3xl px-5 py-8">
         {/* ── Back link ──────────────────────────────────────────────────── */}
         <Link

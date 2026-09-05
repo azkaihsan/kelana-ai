@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getTrips } from "@/services/tripService";
 import { TripCard } from "@/components/TripCard";
 import { Pagination } from "@/components/Pagination";
+import Navbar from "@/components/Navbar";
 import type { Trip } from "@/types/trip";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -95,18 +96,7 @@ export default function TripsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <Link
-            href="/"
-            className="text-lg font-bold text-sky-600 tracking-tight hover:text-sky-700 transition-colors"
-            aria-label="KelanaAI home"
-          >
-            KelanaAI
-          </Link>
-          <span className="text-sm font-medium text-gray-500">My Trips</span>
-        </div>
-      </header>
+      <Navbar variant="solid" />
 
       {/* ── Main Content ────────────────────────────────────────────────── */}
       <main className="mx-auto max-w-3xl px-5 py-8">

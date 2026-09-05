@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createTrip, generateTrip } from "@/services/tripService";
+import { isAuthenticated, fetchCurrentUser } from "@/services/authService";
+import { useUser } from "@/context/UserContext";
+import Navbar from "@/components/Navbar";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -22,12 +25,32 @@ const FOOTER_NAV_LINKS: { label: string; href: string }[] = [
 
 export default function Home() {
   const router = useRouter();
+  const { user, setUser } = useUser();
 
   const [destination, setDestination] = useState("Japan");
   const [budget, setBudget] = useState("2000");
   const [days, setDays] = useState("5");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+      return;
+    }
+    // Hydrate global user state if not already loaded
+    if (!user) {
+      fetchCurrentUser()
+        .then(setUser)
+        .catch((err: Error) => {
+          // Only redirect on 401 (invalid/expired token).
+          // For network errors or other failures, stay on the page silently.
+          if (err.message.startsWith("401")) {
+            router.push("/login");
+          }
+        });
+    }
+  }, [router, user, setUser]);
 
   const handleGenerate = async () => {
     if (!destination.trim()) {
@@ -64,31 +87,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       {/* ── Header / Nav ──────────────────────────────────────────────────── */}
-      <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 py-4 md:px-10">
-        <div className="flex items-center gap-2">
-          <GlobeIcon />
-          <span className="text-lg font-bold tracking-tight text-white drop-shadow">
-            KelanaAI
-          </span>
-        </div>
-        <nav aria-label="Primary navigation" className="hidden gap-6 md:flex">
-          {["Explore", "Destinations", "About"].map((item) => (
-            <a
-              key={item}
-              href="#"
-              className="text-sm font-medium text-white/80 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-            >
-              {item}
-            </a>
-          ))}
-          <a
-            href="/trips"
-            className="text-sm font-medium text-white/80 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-          >
-            My Trips
-          </a>
-        </nav>
-      </header>
+      <Navbar variant="transparent" />
 
       <main className="flex flex-1 flex-col">
         {/* ── Hero Section ────────────────────────────────────────────────── */}
