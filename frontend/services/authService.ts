@@ -108,6 +108,7 @@ export function isAuthenticated(): boolean {
  * Throws if the token is missing/invalid (401) or network fails.
  */
 export async function fetchCurrentUser(): Promise<{
+  id: number;
   name: string;
   email: string;
   trip_count: number;
@@ -125,7 +126,7 @@ export async function fetchCurrentUser(): Promise<{
     },
   });
 
-  return handleResponse<{ name: string; email: string; trip_count: number }>(
+  return handleResponse<{ id: number; name: string; email: string; trip_count: number }>(
     res
   );
 }

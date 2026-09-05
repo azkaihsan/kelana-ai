@@ -8,9 +8,25 @@ import { authenticatedFetch } from "@/lib/apiClient";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
+// ── Errors ────────────────────────────────────────────────────────────────────
+
+/**
+ * Thrown when a mutating request is rejected with 403 Forbidden.
+ * Callers should catch this separately to show a permission-denied message.
+ */
+export class ForbiddenError extends Error {
+  constructor() {
+    super("You do not have permission to modify this trip.");
+    this.name = "ForbiddenError";
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function handleResponse<T>(res: Response): Promise<T> {
+  if (res.status === 403) {
+    throw new ForbiddenError();
+  }
   if (!res.ok) {
     let detail: string = res.statusText;
     try {
@@ -47,6 +63,33 @@ export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
     body: JSON.stringify(payload),
   });
   return handleResponse<Trip>(res);
+}
+
+/**
+ * Update an existing trip by ID.
+ * Throws ForbiddenError if the server returns 403.
+ */
+export async function updateTrip(
+  id: string | number,
+  payload: Partial<CreateTripPayload>
+): Promise<Trip> {
+  const res = await authenticatedFetch(`${API_BASE}/trips/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<Trip>(res);
+}
+
+/**
+ * Delete a trip by ID.
+ * Throws ForbiddenError if the server returns 403.
+ */
+export async function deleteTrip(id: string | number): Promise<void> {
+  const res = await authenticatedFetch(`${API_BASE}/trips/${id}`, {
+    method: "DELETE",
+  });
+  await handleResponse<{ message: string }>(res);
 }
 
 /**

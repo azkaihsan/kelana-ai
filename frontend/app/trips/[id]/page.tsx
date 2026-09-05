@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { getTripById } from "@/services/tripService";
+import { getTripById, deleteTrip, ForbiddenError } from "@/services/tripService";
 import Navbar from "@/components/Navbar";
+import { ToastContainer } from "@/components/ToastContainer";
+import { useToast } from "@/lib/useToast";
+import { useUser } from "@/context/UserContext";
 import type { Trip, ItineraryDay } from "@/types/trip";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -12,11 +15,15 @@ import type { Trip, ItineraryDay } from "@/types/trip";
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useUser();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [itinerary, setItinerary] = useState<ItineraryDay[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     async function fetchTrip() {
@@ -45,6 +52,27 @@ export default function TripDetailPage() {
 
     fetchTrip();
   }, [id, router]);
+
+  // ── Delete handler ───────────────────────────────────────────────────────────
+  async function handleDelete() {
+    if (!trip) return;
+    setDeleting(true);
+    try {
+      await deleteTrip(trip.id);
+      router.push("/trips");
+    } catch (err) {
+      setDeleting(false);
+      setConfirmDelete(false);
+      if (err instanceof ForbiddenError) {
+        showToast("You do not have permission to modify this trip.", "error");
+      } else {
+        showToast(
+          err instanceof Error ? err.message : "Failed to delete trip.",
+          "error"
+        );
+      }
+    }
+  }
 
   // ── Loading state ────────────────────────────────────────────────────────────
   if (loading) {
@@ -83,10 +111,61 @@ export default function TripDetailPage() {
           Back to Trips
         </Link>
 
-        {/* ── Destination heading ─────────────────────────────────────────── */}
-        <h1 className="mt-4 text-3xl font-extrabold text-gray-900 tracking-tight">
-          {trip.destination}
-        </h1>
+        {/* ── Destination heading + owner actions ─────────────────────────── */}
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            {trip.destination}
+          </h1>
+
+          {/* Only render action buttons if current user owns the trip */}
+          {user?.id != null && trip.user_id === user.id && (
+            <div className="flex items-center gap-2">
+              {/* Edit button */}
+              <Link
+                href={`/trips/${id}/edit`}
+                id="trip-detail-edit-btn"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-all duration-150 hover:border-sky-300 hover:text-sky-700 hover:bg-sky-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
+              >
+                <PencilIcon />
+                Edit
+              </Link>
+
+              {/* Delete button */}
+              {confirmDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Are you sure?</span>
+                  <button
+                    type="button"
+                    id="trip-detail-delete-confirm-btn"
+                    disabled={deleting}
+                    onClick={handleDelete}
+                    className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-700 disabled:opacity-60 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                    className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-all duration-150 hover:bg-slate-50 disabled:opacity-60 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  id="trip-detail-delete-btn"
+                  onClick={() => setConfirmDelete(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-all duration-150 hover:border-red-300 hover:text-red-600 hover:bg-red-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+                >
+                  <TrashIcon />
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── Info grid ───────────────────────────────────────────────────── */}
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -131,6 +210,9 @@ export default function TripDetailPage() {
           )}
         </section>
       </main>
+
+      {/* ── Toast notifications ─────────────────────────────────────── */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
@@ -361,3 +443,36 @@ function WalletIcon() {
     </svg>
   );
 }
+
+function PencilIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+

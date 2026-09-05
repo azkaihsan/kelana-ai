@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { getTrips } from "@/services/tripService";
+import { getTrips, deleteTrip, ForbiddenError } from "@/services/tripService";
 import { TripCard } from "@/components/TripCard";
 import { Pagination } from "@/components/Pagination";
 import Navbar from "@/components/Navbar";
+import { ToastContainer } from "@/components/ToastContainer";
+import { useToast } from "@/lib/useToast";
+import { useUser } from "@/context/UserContext";
 import type { Trip } from "@/types/trip";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -19,6 +22,8 @@ type SortMode = "latest" | "oldest" | "budget-desc" | "budget-asc";
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TripsPage() {
+  const { user } = useUser();
+  const { toasts, showToast, dismissToast } = useToast();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +43,28 @@ export default function TripsPage() {
       )
       .finally(() => setLoading(false));
   }, []);
+
+  // ── Delete handler ───────────────────────────────────────────────────────────
+  const handleDelete = useCallback(
+    async (id: string | number) => {
+      try {
+        await deleteTrip(id);
+        setTrips((prev) => prev.filter((t) => t.id !== id));
+        showToast("Trip deleted successfully.", "success");
+      } catch (err) {
+        if (err instanceof ForbiddenError) {
+          showToast("You do not have permission to modify this trip.", "error");
+        } else {
+          showToast(
+            err instanceof Error ? err.message : "Failed to delete trip.",
+            "error"
+          );
+        }
+      }
+    },
+    [showToast]
+  );
+
 
   // ── Combined filter + sort pipeline ─────────────────────────────────────────
   const filteredAndSortedTrips = useMemo(() => {
@@ -280,6 +307,8 @@ export default function TripsPage() {
                     days={trip.days}
                     budget={trip.budget}
                     category={trip.category}
+                    isOwner={user?.id != null && trip.user_id === user.id}
+                    onDelete={handleDelete}
                   />
                 </li>
               ))}
@@ -297,6 +326,9 @@ export default function TripsPage() {
           </>
         )}
       </main>
+
+      {/* ── Toast notifications ─────────────────────────────────────── */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

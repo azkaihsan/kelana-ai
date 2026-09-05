@@ -29,6 +29,8 @@ export type Trip = {
   /** ISO-8601 timestamp from the backend `created_at` column. */
   created_at: string;
   ai_recommendation: string | null;
+  /** ID of the user who owns this trip. */
+  user_id: number | null;
 };
 
 /** Request payload for POST /api/v1/trips */

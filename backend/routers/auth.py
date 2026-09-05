@@ -36,6 +36,7 @@ class AuthResponse(BaseModel):
 
 
 class MeResponse(BaseModel):
+    id: int
     name: str
     email: str
     trip_count: int
@@ -120,4 +121,4 @@ def get_current_user_profile(
     # Count trips belonging to this user
     trip_count = db.query(Trip).filter(Trip.user_id == user_id).count()
 
-    return MeResponse(name=user.name, email=user.email, trip_count=trip_count)
+    return MeResponse(id=user.id, name=user.name, email=user.email, trip_count=trip_count)
