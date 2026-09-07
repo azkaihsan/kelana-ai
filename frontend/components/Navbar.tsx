@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import { logout } from "@/services/authService";
 
@@ -14,6 +14,7 @@ interface NavbarProps {
 
 export default function Navbar({ variant = "solid" }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, clearUser } = useUser();
 
   const handleLogout = () => {
@@ -24,7 +25,25 @@ export default function Navbar({ variant = "solid" }: NavbarProps) {
 
   const isTransparent = variant === "transparent";
 
-  const linkCls = isTransparent
+  const isRouteActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname?.startsWith(`${href}/`);
+  };
+
+  const getLinkCls = (href: string) => {
+    const active = isRouteActive(href);
+    if (isTransparent) {
+      return active
+        ? "text-sm font-semibold text-white border-b-2 border-white pb-0.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+        : "text-sm font-medium text-white/80 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+    }
+
+    return active
+      ? "text-sm font-semibold text-sky-600 border-b-2 border-sky-600 pb-0.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
+      : "text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2";
+  };
+
+  const logoutCls = isTransparent
     ? "text-sm font-medium text-white/80 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
     : "text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2";
 
@@ -72,11 +91,27 @@ export default function Navbar({ variant = "solid" }: NavbarProps) {
             </span>
           )}
 
-          <Link href="/trips" className={linkCls}>
+          <Link
+            href="/trips"
+            className={getLinkCls("/trips")}
+            aria-current={isRouteActive("/trips") ? "page" : undefined}
+          >
             My Trips
           </Link>
 
-          <Link href="/profile" className={linkCls}>
+          <Link
+            href="/assistant"
+            className={getLinkCls("/assistant")}
+            aria-current={isRouteActive("/assistant") ? "page" : undefined}
+          >
+            Assistant
+          </Link>
+
+          <Link
+            href="/profile"
+            className={getLinkCls("/profile")}
+            aria-current={isRouteActive("/profile") ? "page" : undefined}
+          >
             Profile
           </Link>
 
@@ -84,7 +119,7 @@ export default function Navbar({ variant = "solid" }: NavbarProps) {
           <button
             id="navbar-logout-btn"
             onClick={handleLogout}
-            className={linkCls}
+            className={logoutCls}
             aria-label="Log out"
           >
             Logout

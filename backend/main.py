@@ -16,6 +16,7 @@ from services.trip_service import (
 )
 from services.bedrock_service import generate_ai_recommendation, build_trip_prompt
 from services.auth_service import verify_token
+from services.kb_service import ask_knowledge_base
 
 # Try to import auth router - it may not exist yet
 try:
@@ -104,6 +105,9 @@ class TripRecommendationResponse(BaseModel):
     trip_id: int
     destination: str
     recommendation: List[Any]  # structured JSON: list of day objects
+
+class QuestionRequest(BaseModel):
+    question: str
 
 # GET endpoint at the root path
 @app.get("/")
@@ -291,3 +295,15 @@ def generate_trip_recommendation(trip_id: int, current_user: User = Depends(get_
         "destination": trip.destination,
         "recommendation": ai_response
     }
+
+@app.post("/api/v1/ask")
+def ask_endpoint(request: QuestionRequest):
+  # 1. Send question to Knowledge Base
+  answer = ask_knowledge_base(
+    request.question
+  )
+  # 2. Return grounded answer to frontend
+  return {
+    "question": request.question,
+    "answer": answer
+  }
