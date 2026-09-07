@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from models.trip import Trip
 from models.user import User
+from models.conversation import Conversation, Message
 from pydantic import BaseModel
 from typing import Any, List, Optional
 from services.trip_service import (
@@ -17,6 +18,19 @@ from services.trip_service import (
 from services.bedrock_service import generate_ai_recommendation, build_trip_prompt
 from services.auth_service import verify_token
 from services.kb_service import ask_knowledge_base
+
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from services.dependencies import get_current_user
+from routers.conversations import (
+    router as conversations_router,
+    create_conversation,
+    get_conversation_messages,
+    list_conversations,
+    send_message,
+    update_conversation,
+)
 
 # Try to import auth router - it may not exist yet
 try:
@@ -41,55 +55,17 @@ init_db()
 if _auth_router_available:
     app.include_router(auth_router)
 
-# FastAPI dependency to get current authenticated user
-def get_current_user(authorization: Optional[str] = Header(None)) -> User:
-    """
-    FastAPI dependency that extracts and validates JWT token from Authorization header.
-    
-    Args:
-        authorization: Authorization header value (format: "Bearer <token>")
-        
-    Returns:
-        User: The authenticated user object
-        
-    Raises:
-        HTTPException: 401 if token is missing, malformed, or invalid
-    """
-    # Check if Authorization header is present
-    if authorization is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization header missing"
-        )
-    
-    # Validate header format: "Bearer <token>"
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authorization header format. Expected: Bearer <token>"
-        )
-    
-    token = parts[1]
-    
-    # Verify token and extract user_id
-    # verify_token raises HTTPException(401) if token is invalid/expired
-    user_id = verify_token(token)
-    
-    # Query database to fetch User object
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        
-        if user is None:
-            raise HTTPException(
-                status_code=401,
-                detail="User not found"
-            )
-        
-        return user
-    finally:
-        db.close()
+# Conversations routes
+app.include_router(conversations_router)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    """Return HTTP 400 Bad Request on payload validation errors."""
+    return JSONResponse(
+        status_code=400,
+        content={"detail": jsonable_encoder(exc.errors())},
+    )
 
 class TripRequest(BaseModel):
     destination: str

@@ -100,6 +100,14 @@ export default function Navbar({ variant = "solid" }: NavbarProps) {
           </Link>
 
           <Link
+            href="/chat"
+            className={getLinkCls("/chat")}
+            aria-current={isRouteActive("/chat") ? "page" : undefined}
+          >
+            Chat
+          </Link>
+
+          <Link
             href="/assistant"
             className={getLinkCls("/assistant")}
             aria-current={isRouteActive("/assistant") ? "page" : undefined}
