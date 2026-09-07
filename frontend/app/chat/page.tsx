@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, FormEvent, KeyboardEvent } from "react";
+import { useEffect, useState, useRef, useCallback, FormEvent, KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { ToastContainer } from "@/components/ToastContainer";
@@ -14,6 +14,7 @@ import {
   getConversationMessages,
   sendMessage,
   formatConversationDate,
+  formatMessageTime,
 } from "@/services/conversationService";
 import type { Conversation, Message } from "@/types/conversation";
 import ReactMarkdown from "react-markdown";
@@ -28,6 +29,11 @@ export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
+  // Current active conversation object
+  const activeConversation = conversations.find(
+    (c) => c.id === activeConversationId
+  );
+
   // UI state
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -39,15 +45,35 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const scrollToBottom = (smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: smooth ? "smooth" : "auto",
-    });
-  };
+  // Auto-scroll helper
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        block: "end",
+      });
+    }
+  }, []);
 
+  // Scenario 1: On initial load / conversation open: automatically scroll to bottom
+  // so the latest message is immediately visible
   useEffect(() => {
-    scrollToBottom(true);
-  }, [messages, sending]);
+    if (!loadingMessages && messages.length > 0) {
+      const timer = setTimeout(() => {
+        scrollToBottom(false);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeConversationId, loadingMessages, scrollToBottom]);
+
+  // Scenario 2: On new message (user sends a message, or assistant reply arrives)
+  const prevMessagesCountRef = useRef(messages.length);
+  useEffect(() => {
+    if (messages.length > prevMessagesCountRef.current || sending) {
+      scrollToBottom(true);
+    }
+    prevMessagesCountRef.current = messages.length;
+  }, [messages.length, sending, scrollToBottom]);
 
   // Check auth and hydrate user context
   useEffect(() => {
@@ -196,6 +222,7 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, optimisticUserMsg]);
     setInputValue("");
     setSending(true);
+    setTimeout(() => scrollToBottom(true), 20);
 
     // If active conversation still has generic title, update it optimistically and on backend
     const currentConv = conversations.find((c) => c.id === targetConvId);
@@ -366,21 +393,54 @@ export default function ChatPage() {
             id="chat-main-panel"
             className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
           >
-            {/* Mobile Header Bar with Conversations toggle */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5 md:hidden">
-              <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                <SidebarToggleIcon />
-                <span>Conversations</span>
-              </button>
-              <button
-                onClick={handleNewConversation}
-                className="text-xs font-semibold text-[#0067b8] hover:underline cursor-pointer"
-              >
-                + New Chat
-              </button>
+            {/* ── Conversation Header Bar (Dynamic Active Title) ──────── */}
+            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:px-6 md:py-3.5 shadow-2xs">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Mobile sidebar toggle button */}
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="flex items-center justify-center p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 md:hidden cursor-pointer"
+                  aria-label="Open conversations list"
+                  title="Conversations"
+                >
+                  <SidebarToggleIcon />
+                </button>
+
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e8f1fa] text-[#0067b8]">
+                    <ChatBubbleSolidIcon size="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2
+                      id="active-conversation-title"
+                      className="truncate text-sm md:text-base font-semibold text-slate-900"
+                    >
+                      {activeConversation?.title ||
+                        (loadingConversations ? "Loading..." : "New Conversation")}
+                    </h2>
+                    {activeConversation && (
+                      <p className="truncate text-xs text-slate-400">
+                        {messages.length} {messages.length === 1 ? "message" : "messages"}
+                        {activeConversation.created_at && (
+                          <span> • Started {formatConversationDate(activeConversation.created_at)}</span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Header Action Button */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  id="header-new-chat-btn"
+                  onClick={handleNewConversation}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-sky-300 hover:bg-[#e8f1fa] hover:text-[#0067b8] transition-colors cursor-pointer"
+                >
+                  <span className="text-sm font-bold leading-none">+</span>
+                  <span className="hidden sm:inline">New Chat</span>
+                </button>
+              </div>
             </div>
 
             {/* Message Thread Scroll Area */}
@@ -438,6 +498,13 @@ export default function ChatPage() {
                       {isUser ? (
                         <div className="max-w-[85%] md:max-w-[65%] rounded-xs bg-[#0067b8] px-5 py-3 text-sm md:text-base leading-relaxed text-white shadow-xs">
                           <p className="whitespace-pre-wrap">{msg.content}</p>
+                          {msg.created_at && (
+                            <div className="mt-1.5 flex justify-end">
+                              <span className="text-[11px] font-normal text-white/70">
+                                {formatMessageTime(msg.created_at)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         /* Assistant message: Pill shape with light grayish/blue bg and soft border, rendered with Markdown */
@@ -504,6 +571,13 @@ export default function ChatPage() {
                               {msg.content}
                             </ReactMarkdown>
                           </div>
+                          {msg.created_at && (
+                            <div className="mt-2 flex justify-end">
+                              <span className="text-[11px] font-normal text-slate-400">
+                                {formatMessageTime(msg.created_at)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -511,15 +585,22 @@ export default function ChatPage() {
                 })
               )}
 
-              {/* Waiting for Bedrock AI response indicator */}
+              {/* Typing Indicator: Loading state while waiting for LLM response */}
               {sending && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 rounded-3xl border border-[#dbe4ee] bg-[#f0f4f8] px-5 py-3 text-sm text-slate-500 shadow-xs">
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#0067b8] animate-bounce" />
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#0067b8] animate-bounce [animation-delay:0.2s]" />
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#0067b8] animate-bounce [animation-delay:0.4s]" />
-                    <span className="ml-1 text-xs text-slate-400">
-                      KelanaAI is thinking...
+                <div
+                  className="flex justify-start"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="AI is typing"
+                >
+                  <div className="flex items-center gap-2 rounded-3xl border border-[#dbe4ee] bg-[#f0f4f8] px-5 py-3 text-sm text-slate-600 shadow-xs">
+                    <div className="flex items-center gap-1">
+                      <span className="inline-block h-2 w-2 rounded-full bg-[#0067b8] animate-bounce" />
+                      <span className="inline-block h-2 w-2 rounded-full bg-[#0067b8] animate-bounce [animation-delay:0.2s]" />
+                      <span className="inline-block h-2 w-2 rounded-full bg-[#0067b8] animate-bounce [animation-delay:0.4s]" />
+                    </div>
+                    <span className="ml-1 text-xs font-medium text-slate-500">
+                      AI is typing...
                     </span>
                   </div>
                 </div>

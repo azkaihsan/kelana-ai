@@ -112,3 +112,22 @@ export function formatConversationDate(dateStr: string): string {
     return "";
   }
 }
+
+/**
+ * Format timestamp into a readable 12-hour message time format (e.g. "10:45 AM").
+ */
+export function formatMessageTime(dateStr?: string): string {
+  if (!dateStr) return "";
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "";
+  }
+}
+
