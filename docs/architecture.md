@@ -25,7 +25,7 @@ flowchart TD
 
     subgraph L3["3. FastAPI (API Gateway / Service Layer)"]
         Uvicorn["Uvicorn ASGI Server<br/>(Python 3.12+ Async Event Loop)"]
-        Middleware["CORS Middleware & Exception Handlers<br/>(RequestValidationError -> 400 Bad Request)"]
+        Middleware["CORS Middleware & Exception Handlers<br/>(RequestValidationError yields 400 Bad Request)"]
         RouterMount["Route Controllers<br/>(/api/v1/auth, /api/v1/trips, /api/v1/conversations, /api/v1/ask)"]
         PydanticValidators["Pydantic v2 Request/Response Models<br/>(TripRequest, ConversationCreateRequest, etc.)"]
     end
@@ -118,34 +118,34 @@ sequenceDiagram
     participant Bedrock as Amazon Bedrock (Nova Lite)
     participant DB as Neon PostgreSQL
 
-    User->>FE: Click "Generate AI Plan" on Trip #42
+    User->>FE: Click Generate AI Plan on Trip 42
     FE->>Client: generateTrip(42)
-    Client->>Client: Read JWT from localStorage; inject "Authorization: Bearer <token>"
+    Client->>Client: Read JWT from localStorage and attach Bearer token
     Client->>API: POST /api/v1/trips/42/generate
     API->>Auth: get_current_user(Header)
-    Auth->>Auth: Verify JWT signature & expiration (HS256)
-    Auth->>DB: SELECT * FROM users WHERE id = user_id
+    Auth->>Auth: Verify JWT signature and expiration
+    Auth->>DB: SELECT user by ID
     DB-->>Auth: User Record
     Auth-->>API: Authenticated User Object
 
-    API->>DB: SELECT * FROM trips WHERE id = 42
+    API->>DB: SELECT trip by ID
     DB-->>API: Trip Record
     API->>API: Verify ownership (trip.user_id == current_user.id)
-    Note over API: If mismatch -> 403 Forbidden
+    Note over API: If mismatch, return 403 Forbidden
 
     API->>Logic: build_trip_prompt(trip)
     Logic-->>API: Structured Prompt requesting pure JSON array
     API->>Logic: generate_ai_recommendation(prompt)
-    Logic->>Bedrock: client.converse(modelId="amazon.nova-lite-v1:0", messages=[...])
-    Bedrock-->>Logic: Raw Text (JSON payload)
-    Logic->>Logic: Strip markdown code fences & json.loads()
+    Logic->>Bedrock: client.converse(modelId, messages)
+    Bedrock-->>Logic: Raw Text JSON payload
+    Logic->>Logic: Strip markdown code fences and parse JSON
     Logic-->>API: Parsed Itinerary Object (List of Days)
 
-    API->>DB: UPDATE trips SET ai_recommendation = JSON_STR WHERE id = 42
+    API->>DB: UPDATE trips SET ai_recommendation
     DB-->>API: Row Updated
-    API-->>Client: HTTP 200 OK { trip_id, destination, recommendation }
+    API-->>Client: HTTP 200 OK with trip recommendation
     Client-->>FE: Parsed JSON Data
-    FE-->>User: Render Interactive Multi-Day Cards & Daily Budget
+    FE-->>User: Render Interactive Multi-Day Cards and Daily Budget
 ```
 
 ### 2.2. Grounded RAG Regulatory Assistant Sequence
@@ -161,20 +161,20 @@ sequenceDiagram
     participant BedrockKB as Amazon Bedrock Agent Runtime
     participant VectorStore as Vector Store (Knowledge Base)
 
-    User->>FE: Ask "What is the foreign cash declaration limit in Indonesia?"
-    FE->>API: POST /api/v1/ask { "question": "..." }
+    User->>FE: Ask customs cash declaration limit in Indonesia
+    FE->>API: POST /api/v1/ask with question payload
     API->>KB: ask_knowledge_base(question)
-    KB->>BedrockKB: client.retrieve(knowledgeBaseId, text, vectorSearchConfig)
-    BedrockKB->>VectorStore: k-NN Vector Search across chunked circulars
+    KB->>BedrockKB: client.retrieve(knowledgeBaseId, text, config)
+    BedrockKB->>VectorStore: Vector Semantic Search across chunked circulars
     VectorStore-->>BedrockKB: Ranked retrieval chunks with similarity scores
-    BedrockKB-->>KB: retrievalResults [{ score, content, location, metadata }]
+    BedrockKB-->>KB: retrievalResults with score and location metadata
     
-    KB->>KB: Filter chunks: score > 0.85
-    Note over KB: Discard chunks <= 0.85 to eliminate hallucinations
-    KB->>KB: Deduplicate & format sources (clean S3 URIs / metadata)
-    KB-->>API: { answer: "...", source: [...] }
-    API-->>FE: HTTP 200 OK { question, answer: { answer, source } }
-    FE-->>User: Display verified answer with clickable legal citations & badges
+    KB->>KB: Filter chunks with score above 0.85
+    Note over KB: Discard low-confidence chunks to prevent hallucinations
+    KB->>KB: Deduplicate and format sources (clean S3 URIs and metadata)
+    KB-->>API: Return grounded answer and source citations
+    API-->>FE: HTTP 200 OK with grounded response
+    FE-->>User: Display verified answer with clickable legal citations and badges
 ```
 
 ---

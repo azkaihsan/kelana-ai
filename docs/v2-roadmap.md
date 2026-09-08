@@ -107,7 +107,7 @@ flowchart TD
     ExpensesRouter --> Multimodal
     ExpensesRouter --> RouterLLM
     RouterLLM --> NovaLite
-    RouterLLM -.->|Fallback on 429/503| ClaudeHaiku
+    RouterLLM -->|Fallback on 429 or 503| ClaudeHaiku
 
     CollabRouter --> MembersTbl
     ExpensesRouter --> ExpensesTbl
@@ -257,7 +257,7 @@ gantt
     section Phase 3: PWA, Multi-Model & Launch
     PWA Manifest & Service Worker Cache    :p3_1, 2026-12-01, 8d
     IndexedDB Offline Sync & Queue Replay  :p3_2, 2026-12-08, 10d
-    Multi-Model Failover (Nova -> Haiku)   :p3_3, 2026-12-15, 6d
+    Multi-Model Failover (Nova to Haiku)   :p3_3, 2026-12-15, 6d
     Full E2E Security Audit & Load Testing :p3_4, 2026-12-20, 8d
     V2.0 Public Launch (General Availability):milestone, m3, 2026-12-31, 0d
 ```
