@@ -33,6 +33,7 @@ KelanaAI is a full-stack, AI-native travel companion designed to revolutionize t
   - [Docker Compose Configuration](#docker-compose-configuration)
   - [Self-Hosting with Nginx & Let's Encrypt](#self-hosting-with-nginx--lets-encrypt)
 - [Local Development Setup](#local-development-setup)
+- [V2.0 90-Day Roadmap](#v20-90-day-roadmap)
 - [Documentation Index](#documentation-index)
 
 ---
@@ -105,6 +106,10 @@ KelanaAI is architected as a decoupled, multi-tier cloud-native system:
 kelana-ai/
 ├── README.md                           # Master project documentation
 ├── docs/                               # Engineering and operational docs
+│   ├── architecture.md                 # Master System Architecture Document
+│   ├── user-journey.md                 # End-to-End User Journey & Persona Lifecycle
+│   ├── future-improvements.md          # V2.0 Champion Feature & 30-Day MVP Plan
+│   ├── v2-roadmap.md                   # 90-Day Version 2.0 Product & Engineering Roadmap
 │   ├── e2e-testing.md                  # Comprehensive E2E testing procedures
 │   ├── deployment-troubleshooting.md   # Deployment, CORS, DB, & AI troubleshooting
 │   ├── questions.md                    # Knowledge base evaluation dataset
@@ -595,9 +600,38 @@ The application will be accessible at:
 
 ---
 
+## 🗺️ V2.0 90-Day Roadmap
+
+Building upon the initial 30-day MVP release (**Real-Time Travel Expense & Budget Tracking**), the **V2.0 90-Day Roadmap** scales KelanaAI into a collaborative, offline-resilient, enterprise-grade travel platform.
+
+### Phased 90-Day Milestones
+1. **Phase 1 (Days 1–30): Expense Tracking V2 & DevOps Foundations**
+   - **Multimodal Receipt OCR:** Photograph foreign paper receipts; Amazon Bedrock extracts merchant, amounts, and categories in $<3\text{s}$.
+   - **Multi-Currency Engine:** Live daily FX conversion across 32 currencies with CSV and PDF reconciliation export.
+   - **CI/CD & Observability:** Automated GitHub Actions test/build pipelines and CloudWatch structured logging with anomaly alerts.
+2. **Phase 2 (Days 31–60): Team Trip Planning & Shared Expense Splitting**
+   - **Collaborative Trips:** Invite travel companions via secure cryptographic tokens (`trip_members`) with RBAC roles (`Owner`, `Editor`, `Viewer`).
+   - **Splitwise-Style Settlement:** Group expense splitting with $O(N)$ debt minimization algorithm ("Who Owes Whom").
+   - **Viral Organic Growth:** Group trip invitations creating a self-sustaining viral acquisition loop ($K \ge 1.25$).
+3. **Phase 3 (Days 61–90): Mobile PWA Offline Mode, Multi-Model LLM & Public GA**
+   - **Progressive Web App (PWA):** Home-screen installable on iOS/Android with Service Worker cache-first application shell.
+   - **IndexedDB Offline Queue:** Log expenses and view itineraries with zero cellular connectivity; auto-syncs upon reconnection.
+   - **Multi-Model Fallback:** Dynamic Bedrock routing (Nova Lite primary $\to$ Claude 3.5 Haiku fallback on 429/503 errors).
+   - **General Availability (GA):** 1,000 virtual-user load testing, zero-trust security audit, and public launch.
+
+📖 **Detailed Roadmap Documentation:**
+- 🗺️ **[Comprehensive 90-Day V2.0 Roadmap (`docs/v2-roadmap.md`)](./docs/v2-roadmap.md)**: Feature selection matrix, database schemas, Pydantic contracts, Gantt charts, and risk mitigations.
+- 🚀 **[Initial 30-Day MVP Plan (`docs/future-improvements.md`)](./docs/future-improvements.md)**: Core expense tracking MVP specifications and sprint schedule.
+
+---
+
 ## 📚 Documentation Index
 
 For in-depth operational procedures, testing specifications, and troubleshooting matrices, refer to:
+- 🏛️ **[System Architecture Document (`docs/architecture.md`)](./docs/architecture.md)**: 8-tier system architecture, component breakdowns, defensibility trade-off matrix, sequence diagrams, and end-to-end data flows.
+- 🗺️ **[End-to-End User Journey (`docs/user-journey.md`)](./docs/user-journey.md)**: Narrative walkthrough following a traveler through registration, itinerary generation, grounded RAG Q&A, multi-turn chat, and account management.
+- 🗺️ **[90-Day V2.0 Roadmap (`docs/v2-roadmap.md`)](./docs/v2-roadmap.md)**: Product & engineering execution plan across Expense V2, Team Planning, Mobile PWA, and Multi-Model LLMs.
+- 🚀 **[Future Improvements & 30-Day MVP (`docs/future-improvements.md`)](./docs/future-improvements.md)**: Initial feature justification matrix and 30-day MVP rollout plan for Travel Expense Tracking.
 - 🧪 **[End-to-End Testing Documentation (`docs/e2e-testing.md`)](./docs/e2e-testing.md)**: User flows, testing frameworks (Playwright, Postman, pytest), assertions, and DB state verification.
 - 🔧 **[Deployment Troubleshooting Guide (`docs/deployment-troubleshooting.md`)](./docs/deployment-troubleshooting.md)**: Resolution workflows for CORS issues, missing environment variables, API routing mismatches, Neon connection pool limits, and AWS Bedrock IAM permissions.
 - 📊 **[RAG Response Evaluation Report (`docs/test_result.md`)](./docs/test_result.md)**: Quantitative and qualitative benchmarking of Amazon Bedrock Knowledge Base retrieval versus base LLM output.
