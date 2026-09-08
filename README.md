@@ -33,6 +33,7 @@ KelanaAI is a full-stack, AI-native travel companion designed to revolutionize t
   - [Docker Compose Configuration](#docker-compose-configuration)
   - [Self-Hosting with Nginx & Let's Encrypt](#self-hosting-with-nginx--lets-encrypt)
 - [Local Development Setup](#local-development-setup)
+- [30-Day MVP: Travel Expense & Budget Tracking](#30-day-mvp-travel-expense--budget-tracking)
 - [V2.0 90-Day Roadmap](#v20-90-day-roadmap)
 - [Documentation Index](#documentation-index)
 
@@ -597,6 +598,21 @@ The application will be accessible at:
 - **Frontend:** [http://localhost:3000](http://localhost:3000)
 - **Backend API Docs (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Health Check:** [http://localhost:8000/health](http://localhost:8000/health)
+
+---
+
+## 💰 30-Day MVP: Travel Expense & Budget Tracking
+
+To transform KelanaAI from a one-time pre-trip planning utility into an **active daily in-trip companion**, the core priority of our 30-day MVP release is **Real-Time Travel Expense & Budget Tracking**.
+
+- **Core Value Proposition:** *"Close the loop between dream and reality: plan your budget with AI, track your actual spend on the go, and never run out of money mid-trip."*
+- **Key MVP Deliverables:**
+  - **Mobile Quick-Logging:** Log cash and card expenses (Amount, Category, Date, Note) in under 5 seconds on mobile web.
+  - **Live Burn-Down Telemetry:** Dynamic budget progress bar comparing actual daily spend against the planned target ($/day).
+  - **Category Spending Telemetry:** Instant breakdown across Accommodation, Food & Dining, Transit, Activities, and Miscellaneous costs.
+  - **AI Budget Rebalance Advisor:** On-demand Amazon Bedrock recommendations providing practical trade-offs to recover from mid-trip overspending.
+  - **Self-Contained Architecture:** Zero external GDS/OTA API blockers; builds directly upon our existing FastAPI, PostgreSQL, and Bedrock infrastructure.
+- 📖 **Full 30-Day Specification:** Detailed sprint schedules, database schemas, and Pydantic contracts are documented in **[`docs/future-improvements.md`](./docs/future-improvements.md)**.
 
 ---
 
