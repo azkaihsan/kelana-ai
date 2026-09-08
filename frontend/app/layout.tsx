@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   title: "KelanaAI — AI-Powered Travel Itinerary Planner",
   description:
     "Plan your perfect trip with KelanaAI. Enter your destination, budget, and duration to receive a personalised day-by-day travel itinerary powered by AI.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

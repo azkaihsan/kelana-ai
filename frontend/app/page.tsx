@@ -16,7 +16,7 @@ const HERO_IMAGE_URL =
 const FOOTER_NAV_LINKS: { label: string; href: string }[] = [
   { label: "Explore", href: "#" },
   { label: "Destinations", href: "#" },
-  { label: "About", href: "#" },
+  { label: "About", href: "/about" },
   { label: "Privacy Policy", href: "#" },
   { label: "Terms", href: "#" },
 ];

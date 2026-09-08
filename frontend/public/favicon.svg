@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient: Tech Indigo to Cyan -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    
+    <!-- Shadow for depth -->
+    <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Circular Base (perfect for rounded app icons and favicons) -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)" />
+
+  <!-- Outer Location Pin (Travel Element) -->
+  <path d="M256,96 C180.9,96 120,156.9 120,232 C120,334 256,432 256,432 C256,432 392,334 392,232 C392,156.9 331.1,96 256,96 Z" 
+        fill="#FFFFFF" filter="url(#drop-shadow)" />
+
+  <!-- Inner AI Sparkle (AI/Tech Element) -->
+  <path d="M256,152 Q256,220 188,220 Q256,220 256,288 Q256,220 324,220 Q256,220 256,152 Z" 
+        fill="#4F46E5" />
+        
+  <!-- Small secondary sparkles for the "AI" feel -->
+  <path d="M336,120 Q336,140 316,140 Q336,140 336,160 Q336,140 356,140 Q336,140 336,120 Z" fill="#06B6D4"/>
+  <path d="M176,280 Q176,295 161,295 Q176,295 176,310 Q176,295 191,295 Q176,295 176,280 Z" fill="#06B6D4"/>
+</svg>
