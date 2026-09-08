@@ -6,8 +6,18 @@ KelanaAI is a full-stack, AI-native travel companion designed to revolutionize t
 
 ---
 
+## 🌐 Live Deployments
+
+- **Live App :** https://kelana-ai-five.vercel.app/
+- **Live API :** https://kelana-ai-cc9cb4d7.fastapicloud.dev/
+- **Live API Docs :** https://kelana-ai-cc9cb4d7.fastapicloud.dev/docs
+- **Live DB :** Neon Serverless PostgreSQL ([Neon Console](https://console.neon.tech/app/projects/little-glade-03919573))
+
+---
+
 ## 📑 Table of Contents
 
+- [Live Deployments](#-live-deployments)
 - [System Architecture](#system-architecture)
 - [Tech Stack](#tech-stack)
 - [Project Directory Structure](#project-directory-structure)
