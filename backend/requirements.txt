@@ -9,7 +9,6 @@ email-validator==2.3.0
 fastapi==0.128.8
 psycopg2-binary==2.9.12
 pyasn1==0.6.4
-pyasn1-modules==0.2.8
 pydantic==2.10.6
 pydantic_core==2.27.2
 python-dotenv==1.2.1
